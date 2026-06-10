@@ -28,6 +28,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(BookingSlotTaken());
     } on Failure catch (e) {
       emit(BookingError(e.message));
+    } catch (_) {
+      emit(const BookingError('Something went wrong. Please try again.'));
     }
   }
 
@@ -38,6 +40,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(UserBookingsLoaded(bookings));
     } on Failure catch (e) {
       emit(BookingError(e.message));
+    } catch (_) {
+      emit(const BookingError('Something went wrong. Please try again.'));
     }
   }
 
@@ -48,6 +52,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       emit(BookingCancelled());
     } on Failure catch (e) {
       emit(BookingError(e.message));
+    } catch (_) {
+      emit(const BookingError('Something went wrong. Please try again.'));
     }
   }
 }

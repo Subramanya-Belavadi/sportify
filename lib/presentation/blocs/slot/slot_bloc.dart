@@ -23,6 +23,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       emit(SlotLoaded(slots: slots));
     } on Failure catch (e) {
       emit(SlotError(e.message));
+    } catch (_) {
+      emit(const SlotError('Something went wrong. Please try again.'));
     }
   }
 
@@ -33,6 +35,8 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       emit(SlotLoaded(slots: slots, selectedSlot: prev));
     } on Failure catch (e) {
       emit(SlotError(e.message));
+    } catch (_) {
+      emit(const SlotError('Something went wrong. Please try again.'));
     }
   }
 

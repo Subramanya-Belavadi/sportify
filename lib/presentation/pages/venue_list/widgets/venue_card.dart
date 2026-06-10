@@ -111,18 +111,31 @@ class _VenueImage extends StatelessWidget {
         width: double.infinity,
         color: AppColors.primarySurface,
         child: imageUrl.isNotEmpty
-            ? Image.network(imageUrl, fit: BoxFit.cover)
+            ? imageUrl.startsWith('assets/')
+                ? Image.asset(imageUrl, fit: BoxFit.cover)
+                : Image.network(imageUrl, fit: BoxFit.cover)
             : Center(
                 child: Icon(
-                  sport == 'Badminton'
-                      ? Icons.sports_tennis
-                      : Icons.sports_soccer,
+                  _iconForSport(sport),
                   size: 48,
                   color: AppColors.primary,
                 ),
               ),
       ),
     );
+  }
+}
+
+IconData _iconForSport(String sport) {
+  switch (sport) {
+    case 'Football':
+      return Icons.sports_soccer;
+    case 'Box Cricket':
+      return Icons.sports_cricket;
+    case 'Pickleball':
+      return Icons.sports_tennis;
+    default:
+      return Icons.sports_tennis;
   }
 }
 

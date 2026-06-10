@@ -8,8 +8,8 @@ class ApiClient {
   ApiClient() {
     _dio = Dio(BaseOptions(
       baseUrl: dotenv.env['API_BASE_URL'] ?? '',
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 15),
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 10),
       headers: {'Content-Type': 'application/json'},
     ));
   }
@@ -25,6 +25,8 @@ class ApiClient {
       return await _dio.get(path);
     } on DioException catch (e) {
       throw _map(e);
+    } catch (_) {
+      throw const NetworkException();
     }
   }
 
@@ -33,6 +35,8 @@ class ApiClient {
       return await _dio.post(path, data: data);
     } on DioException catch (e) {
       throw _map(e);
+    } catch (_) {
+      throw const NetworkException();
     }
   }
 
@@ -41,19 +45,25 @@ class ApiClient {
       return await _dio.delete(path);
     } on DioException catch (e) {
       throw _map(e);
+    } catch (_) {
+      throw const NetworkException();
     }
   }
 
   Exception _map(DioException e) {
-    if (e.type == DioExceptionType.connectionError ||
-        e.type == DioExceptionType.connectionTimeout) {
-      return const NetworkException();
+    switch (e.type) {
+      case DioExceptionType.connectionError:
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return const NetworkException();
+      default:
+        final code = e.response?.statusCode;
+        if (code == 409) return const SlotAlreadyTakenException();
+        return ServerException(
+          message: e.response?.data?['detail'] ?? e.message ?? 'Server error',
+          statusCode: code,
+        );
     }
-    final code = e.response?.statusCode;
-    if (code == 409) return const SlotAlreadyTakenException();
-    return ServerException(
-      message: e.response?.data?['detail'] ?? e.message ?? 'Server error',
-      statusCode: code,
-    );
   }
 }

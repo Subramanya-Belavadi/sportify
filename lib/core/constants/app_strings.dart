@@ -1,7 +1,7 @@
 class AppStrings {
   AppStrings._();
 
-  static const String appName = 'QuickSlot';
+  static const String appName = 'Sportify';
   static const String tagline = 'Book your sports slot instantly';
 
   static const String selectUser = 'Who are you?';

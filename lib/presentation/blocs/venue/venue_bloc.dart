@@ -21,6 +21,8 @@ class VenueBloc extends Bloc<VenueEvent, VenueState> {
       emit(VenueLoaded(venues));
     } on Failure catch (e) {
       emit(VenueError(e.message));
+    } catch (_) {
+      emit(const VenueError('Something went wrong. Please try again.'));
     }
   }
 }
