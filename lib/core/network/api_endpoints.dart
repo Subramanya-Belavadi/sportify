@@ -6,4 +6,6 @@ class ApiEndpoints {
   static const String bookings = '/bookings';
   static String userBookings(String userId) => '/users/$userId/bookings';
   static String bookingById(String id) => '/bookings/$id';
+  static String reserveSlot(String venueId, String slotId) =>
+      '/venues/$venueId/slots/$slotId/reserve';
 }

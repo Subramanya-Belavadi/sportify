@@ -9,6 +9,7 @@ class SlotGrid extends StatelessWidget {
   final List<SlotEntity> selectedSlots;
   final Set<int> userBlockedHours;
   final ValueChanged<SlotEntity> onSlotTap;
+  final bool isToday;
   const SlotGrid({
     super.key,
     required this.slots,
@@ -16,11 +17,13 @@ class SlotGrid extends StatelessWidget {
     required this.selectedSlots,
     required this.userBlockedHours,
     required this.onSlotTap,
+    required this.isToday,
   });
 
   @override
   Widget build(BuildContext context) {
     final selectedIds = selectedSlots.map((s) => s.id).toSet();
+    final currentHour = DateTime.now().hour;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -39,11 +42,13 @@ class SlotGrid extends StatelessWidget {
               final slot = slots[i];
               final hour = int.parse(slot.startTime.split(':')[0]);
               final blockedByUser = userBlockedHours.contains(hour);
+              final isPast = isToday && hour <= currentHour;
               return _SlotChip(
                 slot: slot,
                 isSelected: selectedIds.contains(slot.id),
                 isAnchor: selectedSlot?.id == slot.id,
                 isBlockedByUser: blockedByUser,
+                isPast: isPast,
                 onTap: () => onSlotTap(slot),
               );
             },
@@ -59,18 +64,20 @@ class _SlotChip extends StatelessWidget {
   final bool isSelected;
   final bool isAnchor;
   final bool isBlockedByUser;
+  final bool isPast;
   final VoidCallback onTap;
   const _SlotChip({
     required this.slot,
     required this.isSelected,
     required this.isAnchor,
     required this.isBlockedByUser,
+    required this.isPast,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool available = slot.isAvailable && !isBlockedByUser;
+    final bool available = slot.isAvailable && !isBlockedByUser && !isPast;
 
     Color bgColor;
     Color borderColor;
@@ -78,7 +85,13 @@ class _SlotChip extends StatelessWidget {
     Color labelColor;
     String label;
 
-    if (isSelected) {
+    if (isPast) {
+      bgColor = const Color(0xFFF0F0F0);
+      borderColor = Colors.grey.withValues(alpha: 0.3);
+      timeColor = Colors.grey.shade400;
+      labelColor = Colors.grey.shade400;
+      label = 'Past';
+    } else if (isSelected) {
       bgColor = AppColors.primary;
       borderColor = AppColors.primary;
       timeColor = Colors.white;
@@ -173,6 +186,8 @@ class _Legend extends StatelessWidget {
           _LegendDot(color: AppColors.slotAvailable, label: 'Available'),
           const SizedBox(width: 12),
           _LegendDot(color: AppColors.slotBooked, label: 'Booked'),
+          const SizedBox(width: 12),
+          _LegendDot(color: Colors.grey, label: 'Past'),
           if (showYours) ...[
             const SizedBox(width: 12),
             _LegendDot(color: Color(0xFFE65100), label: 'Yours'),

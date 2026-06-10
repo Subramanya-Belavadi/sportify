@@ -3,6 +3,7 @@ import '../../core/di/injection_container.dart';
 import '../../core/network/api_client.dart';
 import '../../domain/entities/venue_entity.dart';
 import '../pages/booking_confirm/booking_confirm_page.dart';
+import '../pages/booking_success/booking_success_page.dart';
 import '../pages/login/login_page.dart';
 import '../pages/signup/signup_page.dart';
 import '../pages/my_bookings/my_bookings_page.dart';
@@ -19,6 +20,7 @@ class AppRouter {
   static const String venueList = '/venues';
   static const String venueDetail = '/venues/:id';
   static const String bookingConfirm = '/booking/confirm';
+  static const String bookingSuccess = '/booking/success';
   static const String myBookings = '/my-bookings';
   static const String profile = '/profile';
 
@@ -37,6 +39,11 @@ class AppRouter {
         path: bookingConfirm,
         builder: (c, s) =>
             BookingConfirmPage(args: s.extra as Map<String, dynamic>),
+      ),
+      GoRoute(
+        path: bookingSuccess,
+        builder: (c, s) =>
+            BookingSuccessPage(args: s.extra as Map<String, dynamic>),
       ),
       GoRoute(
         path: venueDetail,

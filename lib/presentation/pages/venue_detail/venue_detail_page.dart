@@ -25,7 +25,9 @@ class VenueDetailPage extends StatefulWidget {
 }
 
 class _VenueDetailPageState extends State<VenueDetailPage> {
-  DateTime _selectedDate = DateTime.now();
+  DateTime _selectedDate = DateTime.now().hour >= 21
+      ? DateTime.now().add(const Duration(days: 1))
+      : DateTime.now();
   Set<int> _userBlockedHours = {};
 
   @override
@@ -42,7 +44,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
       final dateStr = DateFormatter.toApiFormat(date);
       final Set<int> hours = {};
       for (final b in bookings) {
-        if (b.date == dateStr && b.status == 'confirmed') {
+        if (b.date == dateStr && b.status == 'confirmed' && b.venueId == widget.venueId) {
           final startHour = int.parse(b.startTime.split(':')[0]);
           final endHour = int.parse(b.endTime.split(':')[0]);
           for (int h = startHour; h < endHour; h++) {
@@ -61,7 +63,14 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
     for (int i = idx; i < state.slots.length && i < idx + 4; i++) {
       final slot = state.slots[i];
       final hour = int.parse(slot.startTime.split(':')[0]);
-      if (!slot.isAvailable || _userBlockedHours.contains(hour)) break;
+      final now = DateTime.now();
+      final isToday = _selectedDate.year == now.year &&
+          _selectedDate.month == now.month &&
+          _selectedDate.day == now.day;
+      if (!slot.isAvailable || _userBlockedHours.contains(hour) ||
+          (isToday && hour <= now.hour)) {
+        break;
+      }
       count++;
     }
     return count.clamp(1, 4);
@@ -112,14 +121,20 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                         icon: Icons.access_time_outlined,
                       );
                     }
+                    final now = DateTime.now();
+                    final isToday = _selectedDate.year == now.year &&
+                        _selectedDate.month == now.month &&
+                        _selectedDate.day == now.day;
                     return SlotGrid(
                       slots: state.slots,
                       selectedSlot: state.selectedSlot,
                       selectedSlots: state.selectedSlots,
                       userBlockedHours: _userBlockedHours,
+                      isToday: isToday,
                       onSlotTap: (slot) {
                         final hour = int.parse(slot.startTime.split(':')[0]);
-                        if (!_userBlockedHours.contains(hour)) {
+                        final isPast = isToday && hour <= DateTime.now().hour;
+                        if (!_userBlockedHours.contains(hour) && !isPast) {
                           context.read<SlotBloc>().add(SelectSlot(slot));
                         }
                       },

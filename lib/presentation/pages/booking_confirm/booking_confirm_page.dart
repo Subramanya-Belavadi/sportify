@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -24,31 +25,123 @@ class BookingConfirmPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<BookingBloc>(),
-      child: _ConfirmView(venue: venue, slot: slot, duration: duration, endTime: endTime),
+      child: _ConfirmView(
+          venue: venue, slot: slot, duration: duration, endTime: endTime),
     );
   }
 }
 
-class _ConfirmView extends StatelessWidget {
+class _ConfirmView extends StatefulWidget {
   final VenueEntity venue;
   final SlotEntity slot;
   final int duration;
   final String endTime;
-  const _ConfirmView({required this.venue, required this.slot, required this.duration, required this.endTime});
+  const _ConfirmView(
+      {required this.venue,
+      required this.slot,
+      required this.duration,
+      required this.endTime});
+
+  @override
+  State<_ConfirmView> createState() => _ConfirmViewState();
+}
+
+class _ConfirmViewState extends State<_ConfirmView> {
+  Timer? _countdownTimer;
+  int _secondsLeft = 120;
+  bool _reserving = true;
+  String? _reserveError;
+
+  @override
+  void initState() {
+    super.initState();
+    _reserveSlot();
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _reserveSlot() async {
+    try {
+      await sl<ApiClient>().reserveSlot(widget.venue.id, widget.slot.id);
+      if (!mounted) return;
+      setState(() => _reserving = false);
+      _startCountdown();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _reserving = false;
+        _reserveError = 'This slot is no longer available.';
+      });
+    }
+  }
+
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      setState(() => _secondsLeft--);
+      if (_secondsLeft <= 0) {
+        t.cancel();
+        _onExpired();
+      }
+    });
+  }
+
+  void _onExpired() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Reservation Expired',
+            style: TextStyle(fontWeight: FontWeight.w700)),
+        content: const Text(
+            'Your 2-minute hold has expired. Please select the slot again.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.pop();
+            },
+            child: const Text('Go Back',
+                style: TextStyle(
+                    color: AppColors.error, fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String get _timerLabel {
+    final m = (_secondsLeft ~/ 60).toString().padLeft(2, '0');
+    final s = (_secondsLeft % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  Color get _timerColor {
+    if (_secondsLeft > 60) return AppColors.slotAvailable;
+    if (_secondsLeft > 30) return const Color(0xFFE65100);
+    return AppColors.error;
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<BookingBloc, BookingState>(
       listener: (context, state) {
         if (state is BookingSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(AppStrings.bookingSuccess),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          context.go(AppRouter.myBookings);
+          _countdownTimer?.cancel();
+          context.go(AppRouter.bookingSuccess,
+              extra: {'booking': state.booking});
         } else if (state is BookingSlotTaken) {
+          _countdownTimer?.cancel();
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -85,65 +178,142 @@ class _ConfirmView extends StatelessWidget {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-            onPressed: () => context.pop(),
+            onPressed: () {
+              _countdownTimer?.cancel();
+              context.pop();
+            },
           ),
           title: const Text(
             AppStrings.confirmBooking,
-            style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700),
+            style: TextStyle(
+                color: AppColors.textPrimary, fontWeight: FontWeight.w700),
           ),
+          actions: [
+            if (!_reserving && _reserveError == null)
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _timerColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: _timerColor.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.timer_outlined,
+                            size: 14, color: _timerColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          _timerLabel,
+                          style: TextStyle(
+                            color: _timerColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _VenueImageCard(venue: venue),
-              const SizedBox(height: 16),
-              _BookingDetailsCard(venue: venue, slot: slot, endTime: endTime, duration: duration),
-              const SizedBox(height: 16),
-              _PriceBreakdown(pricePerHour: venue.pricePerHour, duration: duration),
-              const SizedBox(height: 16),
-              BlocBuilder<BookingBloc, BookingState>(
-                builder: (context, state) {
-                  final loading = state is BookingLoading;
-                  return ElevatedButton(
-                    onPressed: loading
-                        ? null
-                        : () => context.read<BookingBloc>().add(
-                              BookSlot(
-                                slotId: slot.id,
-                                userId: sl<ApiClient>().currentUserId ?? '',
-                                durationHours: duration,
-                              ),
-                            ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(54),
-                      elevation: 3,
-                      shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+        body: _reserving
+            ? const Center(child: CircularProgressIndicator())
+            : _reserveError != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.error_outline,
+                              size: 48, color: AppColors.error),
+                          const SizedBox(height: 16),
+                          Text(_reserveError!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 15)),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: () => context.pop(),
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white),
+                            child: const Text('Go Back'),
+                          ),
+                        ],
                       ),
                     ),
-                    child: loading
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text(
-                            'Confirm Booking',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w700),
-                          ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _VenueImageCard(venue: widget.venue),
+                        const SizedBox(height: 16),
+                        _BookingDetailsCard(
+                            venue: widget.venue,
+                            slot: widget.slot,
+                            endTime: widget.endTime,
+                            duration: widget.duration),
+                        const SizedBox(height: 16),
+                        _PriceBreakdown(
+                            pricePerHour: widget.venue.pricePerHour,
+                            duration: widget.duration),
+                        const Spacer(),
+                        BlocBuilder<BookingBloc, BookingState>(
+                          builder: (context, state) {
+                            final loading = state is BookingLoading;
+                            return ElevatedButton(
+                              onPressed: loading
+                                  ? null
+                                  : () =>
+                                      context.read<BookingBloc>().add(BookSlot(
+                                            slotId: widget.slot.id,
+                                            userId: sl<ApiClient>()
+                                                    .currentUserId ??
+                                                '',
+                                            durationHours: widget.duration,
+                                          )),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size.fromHeight(54),
+                                elevation: 3,
+                                shadowColor:
+                                    AppColors.primary.withValues(alpha: 0.4),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              child: loading
+                                  ? const SizedBox(
+                                      height: 22,
+                                      width: 22,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white),
+                                    )
+                                  : const Text(
+                                      'Confirm Booking',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700),
+                                    ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
       ),
     );
   }
@@ -206,7 +376,11 @@ class _BookingDetailsCard extends StatelessWidget {
   final SlotEntity slot;
   final String endTime;
   final int duration;
-  const _BookingDetailsCard({required this.venue, required this.slot, required this.endTime, required this.duration});
+  const _BookingDetailsCard(
+      {required this.venue,
+      required this.slot,
+      required this.endTime,
+      required this.duration});
 
   @override
   Widget build(BuildContext context) {
@@ -226,44 +400,37 @@ class _BookingDetailsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Booking Details',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
-              color: AppColors.textPrimary,
-            ),
-          ),
+          const Text('Booking Details',
+              style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  color: AppColors.textPrimary)),
           const SizedBox(height: 14),
           _DetailRow(
-            icon: Icons.location_on_outlined,
-            label: 'Venue',
-            value: venue.address,
-          ),
+              icon: Icons.location_on_outlined,
+              label: 'Venue',
+              value: venue.address),
           const Divider(height: 20, color: AppColors.divider),
           _DetailRow(
-            icon: Icons.calendar_today_outlined,
-            label: 'Date',
-            value: DateFormatter.toDisplayFormat(DateTime.parse(slot.date)),
-          ),
+              icon: Icons.calendar_today_outlined,
+              label: 'Date',
+              value: DateFormatter.toDisplayFormat(
+                  DateTime.parse(slot.date))),
           const Divider(height: 20, color: AppColors.divider),
           _DetailRow(
-            icon: Icons.access_time_outlined,
-            label: 'Time',
-            value: DateFormatter.slotRange(slot.startTime, endTime),
-          ),
+              icon: Icons.access_time_outlined,
+              label: 'Time',
+              value: DateFormatter.slotRange(slot.startTime, endTime)),
           const Divider(height: 20, color: AppColors.divider),
           _DetailRow(
-            icon: Icons.timelapse_outlined,
-            label: 'Duration',
-            value: '$duration ${duration == 1 ? 'hour' : 'hours'}',
-          ),
+              icon: Icons.timelapse_outlined,
+              label: 'Duration',
+              value: '$duration ${duration == 1 ? 'hour' : 'hours'}'),
           const Divider(height: 20, color: AppColors.divider),
           _DetailRow(
-            icon: Icons.sports_outlined,
-            label: 'Sport',
-            value: venue.sport,
-          ),
+              icon: Icons.sports_outlined,
+              label: 'Sport',
+              value: venue.sport),
         ],
       ),
     );
@@ -311,7 +478,8 @@ class _DetailRow extends StatelessWidget {
 class _PriceBreakdown extends StatelessWidget {
   final double pricePerHour;
   final int duration;
-  const _PriceBreakdown({required this.pricePerHour, required this.duration});
+  const _PriceBreakdown(
+      {required this.pricePerHour, required this.duration});
 
   @override
   Widget build(BuildContext context) {
@@ -324,18 +492,37 @@ class _PriceBreakdown extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 14, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 4))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Price Breakdown', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textPrimary)),
+          const Text('Price Breakdown',
+              style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  color: AppColors.textPrimary)),
           const SizedBox(height: 14),
-          _PriceRow(label: '₹${pricePerHour.toStringAsFixed(0)} × $duration ${duration == 1 ? 'hr' : 'hrs'}', value: '₹${base.toStringAsFixed(0)}', bold: false),
+          _PriceRow(
+              label:
+                  '₹${pricePerHour.toStringAsFixed(0)} × $duration ${duration == 1 ? 'hr' : 'hrs'}',
+              value: '₹${base.toStringAsFixed(0)}',
+              bold: false),
           const SizedBox(height: 8),
-          _PriceRow(label: 'GST (18%)', value: '₹${gst.toStringAsFixed(0)}', bold: false),
+          _PriceRow(
+              label: 'GST (18%)',
+              value: '₹${gst.toStringAsFixed(0)}',
+              bold: false),
           const Divider(height: 20, color: AppColors.divider),
-          _PriceRow(label: 'Total', value: '₹${total.toStringAsFixed(0)}', bold: true),
+          _PriceRow(
+              label: 'Total',
+              value: '₹${total.toStringAsFixed(0)}',
+              bold: true),
         ],
       ),
     );
@@ -346,15 +533,28 @@ class _PriceRow extends StatelessWidget {
   final String label;
   final String value;
   final bool bold;
-  const _PriceRow({required this.label, required this.value, required this.bold});
+  const _PriceRow(
+      {required this.label, required this.value, required this.bold});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(label, style: TextStyle(fontSize: bold ? 15 : 13, color: bold ? AppColors.textPrimary : AppColors.textSecondary, fontWeight: bold ? FontWeight.w800 : FontWeight.w400)),
+        Text(label,
+            style: TextStyle(
+                fontSize: bold ? 15 : 13,
+                color: bold
+                    ? AppColors.textPrimary
+                    : AppColors.textSecondary,
+                fontWeight:
+                    bold ? FontWeight.w800 : FontWeight.w400)),
         const Spacer(),
-        Text(value, style: TextStyle(fontSize: bold ? 18 : 13, color: bold ? AppColors.primary : AppColors.textPrimary, fontWeight: bold ? FontWeight.w800 : FontWeight.w600)),
+        Text(value,
+            style: TextStyle(
+                fontSize: bold ? 18 : 13,
+                color: bold ? AppColors.primary : AppColors.textPrimary,
+                fontWeight:
+                    bold ? FontWeight.w800 : FontWeight.w600)),
       ],
     );
   }

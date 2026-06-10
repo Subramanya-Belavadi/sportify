@@ -62,6 +62,11 @@ class ApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> reserveSlot(String venueId, String slotId) async {
+    final res = await post('/venues/$venueId/slots/$slotId/reserve');
+    return res.data as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> login(String email, String password) async {
     final res = await post('/auth/login', data: {'email': email, 'password': password});
     return res.data as Map<String, dynamic>;
