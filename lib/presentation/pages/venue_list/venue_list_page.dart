@@ -19,23 +19,6 @@ class VenueListPage extends StatefulWidget {
 }
 
 class _VenueListPageState extends State<VenueListPage> {
-  bool _searchActive = false;
-  final _searchController = TextEditingController();
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _toggleSearch(BuildContext context) {
-    setState(() => _searchActive = !_searchActive);
-    if (!_searchActive) {
-      _searchController.clear();
-      context.read<VenueBloc>().add(const SearchVenues(''));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -56,74 +39,51 @@ class _VenueListPageState extends State<VenueListPage> {
                 ),
               ),
             ),
-            title: _searchActive
-                ? TextField(
-                    controller: _searchController,
-                    autofocus: true,
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
-                    cursorColor: Colors.white,
-                    decoration: InputDecoration(
-                      hintText: 'Search venues, sports…',
-                      hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 15),
-                      border: InputBorder.none,
-                    ),
-                    onChanged: (q) => context.read<VenueBloc>().add(SearchVenues(q)),
-                  )
-                : Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Image.asset(
-                          AppImages.logo,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, e, s) => const Icon(
-                            Icons.sports_tennis_rounded,
-                            color: AppColors.primary,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            AppStrings.appName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          Text(
-                            'Find and book venues',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+            title: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-            actions: [
-              IconButton(
-                icon: Icon(
-                  _searchActive ? Icons.close : Icons.search_rounded,
-                  color: Colors.white,
+                  child: Image.asset(
+                    AppImages.logo,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, e, s) => const Icon(
+                      Icons.sports_tennis_rounded,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
+                  ),
                 ),
-                onPressed: () => _toggleSearch(context),
-              ),
-              const SizedBox(width: 4),
-            ],
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      AppStrings.appName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'Find and book venues',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           body: BlocBuilder<VenueBloc, VenueState>(
             builder: (context, state) {
