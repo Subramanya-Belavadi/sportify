@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment & private notes
+.env
+rules.md
+*.pem
+*.key
+*.cert
+
+# Claude Code
+.claude/
