@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/di/injection_container.dart';
+import '../../../core/network/api_client.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../domain/entities/venue_entity.dart';
+import '../../../domain/repositories/booking_repository.dart';
 import '../../blocs/slot/slot_bloc.dart';
 import '../../router/app_router.dart';
 import '../../widgets/empty_state_widget.dart';
@@ -24,6 +26,46 @@ class VenueDetailPage extends StatefulWidget {
 
 class _VenueDetailPageState extends State<VenueDetailPage> {
   DateTime _selectedDate = DateTime.now();
+  Set<int> _userBlockedHours = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserBlockedHours(_selectedDate);
+  }
+
+  Future<void> _loadUserBlockedHours(DateTime date) async {
+    try {
+      final userId = sl<ApiClient>().currentUserId ?? '';
+      if (userId.isEmpty) return;
+      final bookings = await sl<BookingRepository>().getUserBookings(userId);
+      final dateStr = DateFormatter.toApiFormat(date);
+      final Set<int> hours = {};
+      for (final b in bookings) {
+        if (b.date == dateStr && b.status == 'confirmed') {
+          final startHour = int.parse(b.startTime.split(':')[0]);
+          final endHour = int.parse(b.endTime.split(':')[0]);
+          for (int h = startHour; h < endHour; h++) {
+            hours.add(h);
+          }
+        }
+      }
+      if (mounted) setState(() => _userBlockedHours = hours);
+    } catch (_) {}
+  }
+
+  int _effectiveMaxDuration(SlotLoaded state) {
+    if (state.selectedSlot == null) return 1;
+    final idx = state.slots.indexWhere((s) => s.id == state.selectedSlot!.id);
+    int count = 0;
+    for (int i = idx; i < state.slots.length && i < idx + 4; i++) {
+      final slot = state.slots[i];
+      final hour = int.parse(slot.startTime.split(':')[0]);
+      if (!slot.isAvailable || _userBlockedHours.contains(hour)) break;
+      count++;
+    }
+    return count.clamp(1, 4);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +83,11 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
             _DateBar(
               selectedDate: _selectedDate,
               onDateChanged: (date) {
-                setState(() => _selectedDate = date);
+                setState(() {
+                  _selectedDate = date;
+                  _userBlockedHours = {};
+                });
+                _loadUserBlockedHours(date);
               },
             ),
             Expanded(
@@ -70,8 +116,13 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                       slots: state.slots,
                       selectedSlot: state.selectedSlot,
                       selectedSlots: state.selectedSlots,
-                      onSlotTap: (slot) =>
-                          context.read<SlotBloc>().add(SelectSlot(slot)),
+                      userBlockedHours: _userBlockedHours,
+                      onSlotTap: (slot) {
+                        final hour = int.parse(slot.startTime.split(':')[0]);
+                        if (!_userBlockedHours.contains(hour)) {
+                          context.read<SlotBloc>().add(SelectSlot(slot));
+                        }
+                      },
                     );
                   }
                   return const SizedBox.shrink();
@@ -122,7 +173,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                         children: [
                           const Text('Duration:', style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
                           const SizedBox(width: 10),
-                          ...List.generate(s.maxDuration, (i) {
+                          ...List.generate(_effectiveMaxDuration(s), (i) {
                             final h = i + 1;
                             final active = h == s.selectedDuration;
                             return GestureDetector(

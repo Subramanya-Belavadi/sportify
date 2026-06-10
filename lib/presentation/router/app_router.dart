@@ -38,6 +38,14 @@ class AppRouter {
         builder: (c, s) =>
             BookingConfirmPage(args: s.extra as Map<String, dynamic>),
       ),
+      GoRoute(
+        path: venueDetail,
+        builder: (c, s) {
+          final venue = s.extra as VenueEntity;
+          return VenueDetailPage(
+              venueId: s.pathParameters['id']!, venue: venue);
+        },
+      ),
       StatefulShellRoute.indexedStack(
         builder: (c, s, shell) => MainShell(navigationShell: shell),
         branches: [
@@ -46,16 +54,6 @@ class AppRouter {
               GoRoute(
                 path: venueList,
                 builder: (c, s) => const VenueListPage(),
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    builder: (c, s) {
-                      final venue = s.extra as VenueEntity;
-                      return VenueDetailPage(
-                          venueId: s.pathParameters['id']!, venue: venue);
-                    },
-                  ),
-                ],
               ),
             ],
           ),

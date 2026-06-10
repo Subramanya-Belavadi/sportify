@@ -353,53 +353,56 @@ class _HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(28, top + 32, 28, 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 72,
-            height: 72,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(28, top + 32, 28, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                AppImages.logo,
+                fit: BoxFit.contain,
+                errorBuilder: (_, e, s) => const Icon(
+                  Icons.sports_tennis_rounded,
+                  color: AppColors.primary,
+                  size: 32,
                 ),
-              ],
-            ),
-            child: Image.asset(
-              AppImages.logo,
-              fit: BoxFit.contain,
-              errorBuilder: (_, e, s) => const Icon(
-                Icons.sports_tennis_rounded,
-                color: AppColors.primary,
-                size: 36,
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            AppStrings.appName,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1,
-                ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            AppStrings.tagline,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.75),
-                ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              AppStrings.appName,
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1,
+                  ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              AppStrings.tagline,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

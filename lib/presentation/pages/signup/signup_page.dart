@@ -191,7 +191,7 @@ class _SignupPageState extends State<SignupPage> {
                               obscureText: _obscurePassword,
                               textInputAction: TextInputAction.next,
                               decoration: _inputDecoration(
-                                hint: 'Min. 6 characters',
+                                hint: 'Min. 8 chars, letters, numbers & symbol',
                                 icon: Icons.lock_outline_rounded,
                               ).copyWith(
                                 suffixIcon: IconButton(
@@ -210,8 +210,17 @@ class _SignupPageState extends State<SignupPage> {
                                 if (v == null || v.isEmpty) {
                                   return 'Password is required';
                                 }
-                                if (v.length < 6) {
-                                  return 'Password must be at least 6 characters';
+                                if (v.length < 8) {
+                                  return 'At least 8 characters required';
+                                }
+                                if (!RegExp(r'[A-Za-z]').hasMatch(v)) {
+                                  return 'Must contain at least one letter';
+                                }
+                                if (!RegExp(r'\d').hasMatch(v)) {
+                                  return 'Must contain at least one number';
+                                }
+                                if (!RegExp(r'[^A-Za-z0-9]').hasMatch(v)) {
+                                  return 'Must contain at least one symbol';
                                 }
                                 return null;
                               },

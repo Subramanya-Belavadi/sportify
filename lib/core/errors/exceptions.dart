@@ -9,5 +9,6 @@ class NetworkException implements Exception {
 }
 
 class SlotAlreadyTakenException implements Exception {
-  const SlotAlreadyTakenException();
+  final String message;
+  const SlotAlreadyTakenException([this.message = 'This slot is no longer available.']);
 }

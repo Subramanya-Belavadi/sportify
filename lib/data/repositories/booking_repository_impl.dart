@@ -12,8 +12,8 @@ class BookingRepositoryImpl implements BookingRepository {
   Future<BookingEntity> bookSlot({required String slotId, required String userId, int durationHours = 1}) async {
     try {
       return await _datasource.bookSlot(slotId: slotId, userId: userId, durationHours: durationHours);
-    } on SlotAlreadyTakenException {
-      throw const SlotAlreadyTakenFailure();
+    } on SlotAlreadyTakenException catch (e) {
+      throw SlotAlreadyTakenFailure(e.message);
     } on NetworkException {
       throw const NetworkFailure();
     } on ServerException catch (e) {

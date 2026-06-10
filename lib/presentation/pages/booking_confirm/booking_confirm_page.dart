@@ -55,8 +55,9 @@ class _ConfirmView extends StatelessWidget {
             builder: (_) => AlertDialog(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20)),
-              title: const Text('Slot Unavailable'),
-              content: const Text(AppStrings.slotAlreadyTaken),
+              title: const Text('Cannot Book Slot',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+              content: Text(state.message),
               actions: [
                 TextButton(
                   onPressed: () {

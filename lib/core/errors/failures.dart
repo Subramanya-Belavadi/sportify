@@ -12,6 +12,6 @@ class NetworkFailure extends Failure {
 }
 
 class SlotAlreadyTakenFailure extends Failure {
-  const SlotAlreadyTakenFailure()
-      : super(message: 'This slot was just taken by someone else.');
+  const SlotAlreadyTakenFailure([String message = 'This slot is no longer available.'])
+      : super(message: message);
 }

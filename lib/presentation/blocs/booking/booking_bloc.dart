@@ -25,8 +25,8 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
         durationHours: event.durationHours,
       );
       emit(BookingSuccess(booking));
-    } on SlotAlreadyTakenFailure {
-      emit(BookingSlotTaken());
+    } on SlotAlreadyTakenFailure catch (e) {
+      emit(BookingSlotTaken(e.message));
     } on Failure catch (e) {
       emit(BookingError(e.message));
     } catch (_) {

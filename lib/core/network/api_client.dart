@@ -91,7 +91,11 @@ class ApiClient {
         return const NetworkException();
       default:
         final code = e.response?.statusCode;
-        if (code == 409) return const SlotAlreadyTakenException();
+        if (code == 409) {
+          return SlotAlreadyTakenException(
+            e.response?.data?['detail'] ?? 'This slot is no longer available.',
+          );
+        }
         return ServerException(
           message: e.response?.data?['detail'] ?? e.message ?? 'Server error',
           statusCode: code,

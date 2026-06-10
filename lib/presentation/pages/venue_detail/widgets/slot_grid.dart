@@ -7,12 +7,14 @@ class SlotGrid extends StatelessWidget {
   final List<SlotEntity> slots;
   final SlotEntity? selectedSlot;
   final List<SlotEntity> selectedSlots;
+  final Set<int> userBlockedHours;
   final ValueChanged<SlotEntity> onSlotTap;
   const SlotGrid({
     super.key,
     required this.slots,
     required this.selectedSlot,
     required this.selectedSlots,
+    required this.userBlockedHours,
     required this.onSlotTap,
   });
 
@@ -22,7 +24,7 @@ class SlotGrid extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Legend(),
+        _Legend(showYours: userBlockedHours.isNotEmpty),
         Expanded(
           child: GridView.builder(
             padding: const EdgeInsets.all(16),
@@ -33,12 +35,18 @@ class SlotGrid extends StatelessWidget {
               childAspectRatio: 1.7,
             ),
             itemCount: slots.length,
-            itemBuilder: (context, i) => _SlotChip(
-              slot: slots[i],
-              isSelected: selectedIds.contains(slots[i].id),
-              isAnchor: selectedSlot?.id == slots[i].id,
-              onTap: () => onSlotTap(slots[i]),
-            ),
+            itemBuilder: (context, i) {
+              final slot = slots[i];
+              final hour = int.parse(slot.startTime.split(':')[0]);
+              final blockedByUser = userBlockedHours.contains(hour);
+              return _SlotChip(
+                slot: slot,
+                isSelected: selectedIds.contains(slot.id),
+                isAnchor: selectedSlot?.id == slot.id,
+                isBlockedByUser: blockedByUser,
+                onTap: () => onSlotTap(slot),
+              );
+            },
           ),
         ),
       ],
@@ -50,17 +58,51 @@ class _SlotChip extends StatelessWidget {
   final SlotEntity slot;
   final bool isSelected;
   final bool isAnchor;
+  final bool isBlockedByUser;
   final VoidCallback onTap;
   const _SlotChip({
     required this.slot,
     required this.isSelected,
     required this.isAnchor,
+    required this.isBlockedByUser,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool available = slot.isAvailable;
+    final bool available = slot.isAvailable && !isBlockedByUser;
+
+    Color bgColor;
+    Color borderColor;
+    Color timeColor;
+    Color labelColor;
+    String label;
+
+    if (isSelected) {
+      bgColor = AppColors.primary;
+      borderColor = AppColors.primary;
+      timeColor = Colors.white;
+      labelColor = Colors.white.withValues(alpha: 0.8);
+      label = isAnchor ? 'Start' : 'Added';
+    } else if (isBlockedByUser) {
+      bgColor = const Color(0xFFFFF8E1);
+      borderColor = const Color(0xFFFFB300).withValues(alpha: 0.6);
+      timeColor = const Color(0xFFE65100);
+      labelColor = const Color(0xFFE65100).withValues(alpha: 0.8);
+      label = 'Yours';
+    } else if (!slot.isAvailable) {
+      bgColor = const Color(0xFFFFF0F0);
+      borderColor = AppColors.slotBooked.withValues(alpha: 0.4);
+      timeColor = AppColors.slotBooked;
+      labelColor = AppColors.slotBooked.withValues(alpha: 0.7);
+      label = 'Booked';
+    } else {
+      bgColor = Colors.white;
+      borderColor = AppColors.slotAvailable.withValues(alpha: 0.5);
+      timeColor = AppColors.textPrimary;
+      labelColor = AppColors.slotAvailable;
+      label = 'Open';
+    }
 
     return GestureDetector(
       onTap: available ? onTap : null,
@@ -68,35 +110,18 @@ class _SlotChip extends StatelessWidget {
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : available
-                  ? Colors.white
-                  : const Color(0xFFFFF0F0),
+          color: bgColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : available
-                    ? AppColors.slotAvailable.withValues(alpha: 0.5)
-                    : AppColors.slotBooked.withValues(alpha: 0.4),
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  )
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  )
-                ],
+          border: Border.all(color: borderColor, width: isSelected ? 2 : 1),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.04),
+              blurRadius: isSelected ? 8 : 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -104,26 +129,18 @@ class _SlotChip extends StatelessWidget {
             Text(
               DateFormatter.toTimeDisplay(slot.startTime),
               style: TextStyle(
-                color: isSelected
-                    ? Colors.white
-                    : available
-                        ? AppColors.textPrimary
-                        : AppColors.slotBooked,
+                color: timeColor,
                 fontWeight: isAnchor ? FontWeight.w800 : FontWeight.w700,
                 fontSize: 13,
               ),
             ),
             const SizedBox(height: 2),
             Text(
-              available ? (isAnchor ? 'Start' : isSelected ? 'Added' : 'Open') : 'Booked',
+              label,
               style: TextStyle(
-                color: isSelected
-                    ? Colors.white.withValues(alpha: 0.8)
-                    : available
-                        ? AppColors.slotAvailable
-                        : AppColors.slotBooked.withValues(alpha: 0.7),
+                color: labelColor,
                 fontSize: 9.5,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -134,7 +151,8 @@ class _SlotChip extends StatelessWidget {
 }
 
 class _Legend extends StatelessWidget {
-  const _Legend();
+  final bool showYours;
+  const _Legend({this.showYours = false});
 
   @override
   Widget build(BuildContext context) {
@@ -153,9 +171,13 @@ class _Legend extends StatelessWidget {
           ),
           const Spacer(),
           _LegendDot(color: AppColors.slotAvailable, label: 'Available'),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           _LegendDot(color: AppColors.slotBooked, label: 'Booked'),
-          const SizedBox(width: 14),
+          if (showYours) ...[
+            const SizedBox(width: 12),
+            _LegendDot(color: Color(0xFFE65100), label: 'Yours'),
+          ],
+          const SizedBox(width: 12),
           _LegendDot(color: AppColors.primary, label: 'Selected'),
         ],
       ),
