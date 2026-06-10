@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/di/injection_container.dart';
+import 'core/theme/app_theme.dart';
 import 'presentation/router/app_router.dart';
 
 Future<void> main() async {
@@ -18,6 +19,7 @@ class QuickSlotApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'QuickSlot',
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
       routerConfig: AppRouter.router,
     );
   }

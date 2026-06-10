@@ -17,17 +17,37 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onBookSlot(BookSlot event, Emitter<BookingState> emit) async {
-    // TODO: implement
-    throw UnimplementedError();
+    emit(BookingLoading());
+    try {
+      final booking = await _repository.bookSlot(
+        slotId: event.slotId,
+        userId: event.userId,
+      );
+      emit(BookingSuccess(booking));
+    } on SlotAlreadyTakenFailure {
+      emit(BookingSlotTaken());
+    } on Failure catch (e) {
+      emit(BookingError(e.message));
+    }
   }
 
   Future<void> _onLoadUserBookings(LoadUserBookings event, Emitter<BookingState> emit) async {
-    // TODO: implement
-    throw UnimplementedError();
+    emit(BookingLoading());
+    try {
+      final bookings = await _repository.getUserBookings(event.userId);
+      emit(UserBookingsLoaded(bookings));
+    } on Failure catch (e) {
+      emit(BookingError(e.message));
+    }
   }
 
   Future<void> _onCancelBooking(CancelBooking event, Emitter<BookingState> emit) async {
-    // TODO: implement
-    throw UnimplementedError();
+    emit(BookingLoading());
+    try {
+      await _repository.cancelBooking(event.bookingId);
+      emit(BookingCancelled());
+    } on Failure catch (e) {
+      emit(BookingError(e.message));
+    }
   }
 }

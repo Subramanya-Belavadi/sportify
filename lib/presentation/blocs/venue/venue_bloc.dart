@@ -15,7 +15,12 @@ class VenueBloc extends Bloc<VenueEvent, VenueState> {
   }
 
   Future<void> _onLoadVenues(LoadVenues event, Emitter<VenueState> emit) async {
-    // TODO: implement
-    throw UnimplementedError();
+    emit(VenueLoading());
+    try {
+      final venues = await _repository.getVenues();
+      emit(VenueLoaded(venues));
+    } on Failure catch (e) {
+      emit(VenueError(e.message));
+    }
   }
 }

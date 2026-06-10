@@ -47,3 +47,9 @@ app.*.map.json
 # Environment & private notes
 .env
 rules.md
+*.pem
+*.key
+*.cert
+
+# Claude Code
+.claude/

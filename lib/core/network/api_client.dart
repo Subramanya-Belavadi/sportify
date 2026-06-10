@@ -1,3 +1,59 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../errors/exceptions.dart';
+
 class ApiClient {
-  // TODO: implement Dio-based HTTP client with X-User-Id header injection
+  late final Dio _dio;
+
+  ApiClient() {
+    _dio = Dio(BaseOptions(
+      baseUrl: dotenv.env['API_BASE_URL'] ?? '',
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+      headers: {'Content-Type': 'application/json'},
+    ));
+  }
+
+  void setUserId(String userId) {
+    _dio.options.headers['X-User-Id'] = userId;
+  }
+
+  String? get currentUserId => _dio.options.headers['X-User-Id'] as String?;
+
+  Future<Response> get(String path) async {
+    try {
+      return await _dio.get(path);
+    } on DioException catch (e) {
+      throw _map(e);
+    }
+  }
+
+  Future<Response> post(String path, {dynamic data}) async {
+    try {
+      return await _dio.post(path, data: data);
+    } on DioException catch (e) {
+      throw _map(e);
+    }
+  }
+
+  Future<Response> delete(String path) async {
+    try {
+      return await _dio.delete(path);
+    } on DioException catch (e) {
+      throw _map(e);
+    }
+  }
+
+  Exception _map(DioException e) {
+    if (e.type == DioExceptionType.connectionError ||
+        e.type == DioExceptionType.connectionTimeout) {
+      return const NetworkException();
+    }
+    final code = e.response?.statusCode;
+    if (code == 409) return const SlotAlreadyTakenException();
+    return ServerException(
+      message: e.response?.data?['detail'] ?? e.message ?? 'Server error',
+      statusCode: code,
+    );
+  }
 }

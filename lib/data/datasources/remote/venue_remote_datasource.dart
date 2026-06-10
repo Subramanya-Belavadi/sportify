@@ -1,4 +1,6 @@
-import '../../../data/models/venue_model.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_endpoints.dart';
+import '../../models/venue_model.dart';
 
 abstract class VenueRemoteDatasource {
   Future<List<VenueModel>> getVenues();
@@ -6,10 +8,18 @@ abstract class VenueRemoteDatasource {
 }
 
 class VenueRemoteDatasourceImpl implements VenueRemoteDatasource {
-  // TODO: inject ApiClient
-  @override
-  Future<List<VenueModel>> getVenues() => throw UnimplementedError();
+  final ApiClient _client;
+  VenueRemoteDatasourceImpl(this._client);
 
   @override
-  Future<VenueModel> getVenueById(String id) => throw UnimplementedError();
+  Future<List<VenueModel>> getVenues() async {
+    final res = await _client.get(ApiEndpoints.venues);
+    return (res.data as List).map((e) => VenueModel.fromJson(e)).toList();
+  }
+
+  @override
+  Future<VenueModel> getVenueById(String id) async {
+    final res = await _client.get('/venues/$id');
+    return VenueModel.fromJson(res.data);
+  }
 }

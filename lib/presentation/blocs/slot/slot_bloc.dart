@@ -17,17 +17,31 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
   }
 
   Future<void> _onLoadSlots(LoadSlots event, Emitter<SlotState> emit) async {
-    // TODO: implement
-    throw UnimplementedError();
+    emit(SlotLoading());
+    try {
+      final slots = await _repository.getSlots(event.venueId, event.date);
+      emit(SlotLoaded(slots: slots));
+    } on Failure catch (e) {
+      emit(SlotError(e.message));
+    }
   }
 
   Future<void> _onRefreshSlots(RefreshSlots event, Emitter<SlotState> emit) async {
-    // TODO: implement
-    throw UnimplementedError();
+    try {
+      final slots = await _repository.getSlots(event.venueId, event.date);
+      final prev = state is SlotLoaded ? (state as SlotLoaded).selectedSlot : null;
+      emit(SlotLoaded(slots: slots, selectedSlot: prev));
+    } on Failure catch (e) {
+      emit(SlotError(e.message));
+    }
   }
 
   void _onSelectSlot(SelectSlot event, Emitter<SlotState> emit) {
-    // TODO: implement
-    throw UnimplementedError();
+    if (state is SlotLoaded) {
+      emit(SlotLoaded(
+        slots: (state as SlotLoaded).slots,
+        selectedSlot: event.slot,
+      ));
+    }
   }
 }
