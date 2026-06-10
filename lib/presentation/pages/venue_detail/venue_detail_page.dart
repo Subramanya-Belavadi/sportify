@@ -34,10 +34,10 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
           date: DateFormatter.toApiFormat(_selectedDate),
         )),
       child: Scaffold(
-        appBar: AppBar(title: Text(widget.venue.name)),
+        backgroundColor: const Color(0xFFF5F6FA),
         body: Column(
           children: [
-            _VenueInfoBar(venue: widget.venue),
+            _VenueHeroHeader(venue: widget.venue),
             _DateBar(
               selectedDate: _selectedDate,
               onDateChanged: (date) {
@@ -81,22 +81,46 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
         ),
         bottomNavigationBar: BlocBuilder<SlotBloc, SlotState>(
           builder: (context, state) {
-            final selected =
-                state is SlotLoaded ? state.selectedSlot : null;
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                child: ElevatedButton(
-                  onPressed: selected != null
-                      ? () => context.push(
-                            AppRouter.bookingConfirm,
-                            extra: {
-                              'venue': widget.venue,
-                              'slot': selected,
-                            },
-                          )
-                      : null,
-                  child: const Text(AppStrings.bookSlot),
+            final selected = state is SlotLoaded ? state.selectedSlot : null;
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 16,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: ElevatedButton(
+                    onPressed: selected != null
+                        ? () => context.push(
+                              AppRouter.bookingConfirm,
+                              extra: {'venue': widget.venue, 'slot': selected},
+                            )
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size.fromHeight(52),
+                      elevation: 3,
+                      shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      selected != null
+                          ? '${AppStrings.bookSlot}  ·  ${DateFormatter.toTimeDisplay(selected.startTime)}'
+                          : 'Select a Time Slot',
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700),
+                    ),
+                  ),
                 ),
               ),
             );
@@ -107,31 +131,144 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
   }
 }
 
-class _VenueInfoBar extends StatelessWidget {
+class _VenueHeroHeader extends StatelessWidget {
   final VenueEntity venue;
-  const _VenueInfoBar({required this.venue});
+  const _VenueHeroHeader({required this.venue});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
+    return Stack(
+      children: [
+        SizedBox(
+          height: 220 + top,
+          width: double.infinity,
+          child: venue.imageUrl.isNotEmpty
+              ? venue.imageUrl.startsWith('assets/')
+                  ? Image.asset(venue.imageUrl, fit: BoxFit.cover)
+                  : Image.network(venue.imageUrl, fit: BoxFit.cover)
+              : Container(color: AppColors.primarySurface),
+        ),
+        // Dark gradient
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.55),
+                  Colors.black.withValues(alpha: 0.2),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+        // Back button
+        Positioned(
+          top: top + 8,
+          left: 8,
+          child: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.35),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+            ),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        // Venue name & info overlay at bottom
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.75),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SportChip(sport: venue.sport),
+                const SizedBox(height: 6),
+                Text(
+                  venue.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_outlined,
+                        size: 13, color: Colors.white70),
+                    const SizedBox(width: 4),
+                    Text(
+                      venue.address,
+                      style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '₹${venue.pricePerHour.toStringAsFixed(0)}/hr',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SportChip extends StatelessWidget {
+  final String sport;
+  const _SportChip({required this.sport});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          const Icon(Icons.location_on_outlined,
-              size: 14, color: AppColors.textSecondary),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(venue.address,
-                style: const TextStyle(
-                    color: AppColors.textSecondary, fontSize: 13)),
-          ),
-          Text(
-            '₹${venue.pricePerHour.toStringAsFixed(0)}/hr',
-            style: const TextStyle(
-                color: AppColors.primary, fontWeight: FontWeight.w700),
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+      ),
+      child: Text(
+        sport,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -145,17 +282,27 @@ class _DateBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.primarySurface,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const Icon(Icons.calendar_today_outlined,
-              size: 16, color: AppColors.primary),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primarySurface,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.calendar_today_outlined,
+                size: 16, color: AppColors.primary),
+          ),
+          const SizedBox(width: 10),
           Text(
             DateFormatter.toDisplayFormat(selectedDate),
             style: const TextStyle(
-                fontWeight: FontWeight.w600, color: AppColors.primary),
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              fontSize: 14,
+            ),
           ),
           const Spacer(),
           GestureDetector(
@@ -167,8 +314,7 @@ class _DateBar extends StatelessWidget {
                 lastDate: DateTime.now().add(const Duration(days: 30)),
                 builder: (context, child) => Theme(
                   data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.light(
-                        primary: AppColors.primary),
+                    colorScheme: const ColorScheme.light(primary: AppColors.primary),
                   ),
                   child: child!,
                 ),
@@ -186,12 +332,20 @@ class _DateBar extends StatelessWidget {
                 }
               }
             },
-            child: const Text(
-              AppStrings.selectDate,
-              style: TextStyle(
-                  color: AppColors.primary,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                AppStrings.selectDate,
+                style: TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.w600,
-                  fontSize: 13),
+                  fontSize: 12,
+                ),
+              ),
             ),
           ),
         ],

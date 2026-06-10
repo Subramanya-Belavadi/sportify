@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../domain/entities/booking_entity.dart';
 
@@ -11,25 +10,51 @@ class BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isConfirmed = booking.status == 'confirmed';
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLG),
-        border: Border.all(color: AppColors.divider),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimensions.paddingMD),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Column(
+        children: [
+          // Header strip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.08),
+                  AppColors.primary.withValues(alpha: 0.03),
+                ],
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+            ),
+            child: Row(
               children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.sports_outlined,
+                      size: 18, color: AppColors.primary),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     booking.venueName,
                     style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                       fontSize: 15,
                       color: AppColors.textPrimary,
                     ),
@@ -38,50 +63,100 @@ class BookingCard extends StatelessWidget {
                 _StatusBadge(status: booking.status),
               ],
             ),
-            const SizedBox(height: 8),
-            _InfoRow(
-              icon: Icons.calendar_today_outlined,
-              text: DateFormatter.toDisplayFormat(DateTime.parse(booking.date)),
+          ),
+          // Details
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _InfoTile(
+                    icon: Icons.calendar_today_outlined,
+                    label: 'Date',
+                    value: DateFormatter.toDisplayFormat(
+                        DateTime.parse(booking.date)),
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: AppColors.divider,
+                ),
+                Expanded(
+                  child: _InfoTile(
+                    icon: Icons.access_time_outlined,
+                    label: 'Time',
+                    value: DateFormatter.slotRange(
+                        booking.startTime, booking.endTime),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            _InfoRow(
-              icon: Icons.access_time_outlined,
-              text: DateFormatter.slotRange(booking.startTime, booking.endTime),
-            ),
-            const Divider(height: 20, color: AppColors.divider),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: onCancel,
-                icon: const Icon(Icons.cancel_outlined,
-                    size: 16, color: AppColors.error),
-                label: const Text(
-                  'Cancel',
-                  style: TextStyle(color: AppColors.error, fontSize: 13),
+          ),
+          if (isConfirmed)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: onCancel,
+                  icon: const Icon(Icons.cancel_outlined,
+                      size: 15, color: AppColors.error),
+                  label: const Text(
+                    'Cancel Booking',
+                    style: TextStyle(
+                        color: AppColors.error,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
+          if (!isConfirmed) const SizedBox(height: 10),
+        ],
       ),
     );
   }
 }
 
-class _InfoRow extends StatelessWidget {
+class _InfoTile extends StatelessWidget {
   final IconData icon;
-  final String text;
-  const _InfoRow({required this.icon, required this.text});
+  final String label;
+  final String value;
+  const _InfoTile(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: AppColors.textSecondary),
-        const SizedBox(width: 6),
-        Text(text,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 10.5, color: AppColors.textSecondary)),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -94,17 +169,24 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final isConfirmed = status == 'confirmed';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isConfirmed ? AppColors.slotAvailableBg : AppColors.slotBookedBg,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+        color: isConfirmed
+            ? AppColors.slotAvailable.withValues(alpha: 0.12)
+            : AppColors.slotBooked.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isConfirmed
+              ? AppColors.slotAvailable.withValues(alpha: 0.4)
+              : AppColors.slotBooked.withValues(alpha: 0.4),
+        ),
       ),
       child: Text(
         isConfirmed ? 'Confirmed' : status,
         style: TextStyle(
           color: isConfirmed ? AppColors.slotAvailable : AppColors.slotBooked,
           fontSize: 11,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

@@ -19,7 +19,24 @@ class MyBookingsPage extends StatelessWidget {
     return BlocProvider(
       create: (_) => sl<BookingBloc>()..add(LoadUserBookings(userId)),
       child: Scaffold(
-        appBar: AppBar(title: const Text(AppStrings.myBookings)),
+        backgroundColor: const Color(0xFFF5F6FA),
+        appBar: AppBar(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Text(
+            AppStrings.myBookings,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+            ),
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
         body: BlocConsumer<BookingBloc, BookingState>(
           listener: (context, state) {
             if (state is BookingCancelled) {
@@ -60,7 +77,7 @@ class MyBookingsPage extends StatelessWidget {
                 onRefresh: () async =>
                     context.read<BookingBloc>().add(LoadUserBookings(userId)),
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                   itemCount: state.bookings.length,
                   itemBuilder: (context, i) {
                     final b = state.bookings[i];
@@ -83,7 +100,9 @@ class MyBookingsPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text(AppStrings.cancelBooking),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(AppStrings.cancelBooking,
+            style: TextStyle(fontWeight: FontWeight.w700)),
         content: const Text(AppStrings.cancelConfirm),
         actions: [
           TextButton(
@@ -101,7 +120,8 @@ class MyBookingsPage extends StatelessWidget {
                   );
             },
             child: const Text(AppStrings.yes,
-                style: TextStyle(color: AppColors.error)),
+                style: TextStyle(
+                    color: AppColors.error, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
