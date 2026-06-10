@@ -25,6 +25,7 @@ class MyBookingsPage extends StatelessWidget {
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 0,
+          automaticallyImplyLeading: false,
           title: const Text(
             AppStrings.myBookings,
             style: TextStyle(
@@ -33,66 +34,62 @@ class MyBookingsPage extends StatelessWidget {
               fontSize: 18,
             ),
           ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => context.pop(),
-          ),
         ),
         body: BlocConsumer<BookingBloc, BookingState>(
-          listener: (context, state) {
-            if (state is BookingCancelled) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(AppStrings.bookingCancelled),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-              context.read<BookingBloc>().add(LoadUserBookings(userId));
-            } else if (state is BookingError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: AppColors.error,
-                ),
-              );
-            }
-          },
-          builder: (context, state) {
-            if (state is BookingLoading) return const LoadingWidget();
-            if (state is BookingError) {
-              return AppErrorWidget(
-                message: state.message,
-                onRetry: () =>
-                    context.read<BookingBloc>().add(LoadUserBookings(userId)),
-              );
-            }
-            if (state is UserBookingsLoaded) {
-              if (state.bookings.isEmpty) {
-                return const EmptyStateWidget(
-                  message: AppStrings.noBookings,
-                  icon: Icons.calendar_today_outlined,
+            listener: (context, state) {
+              if (state is BookingCancelled) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(AppStrings.bookingCancelled),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+                context.read<BookingBloc>().add(LoadUserBookings(userId));
+              } else if (state is BookingError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppColors.error,
+                  ),
                 );
               }
-              return RefreshIndicator(
-                color: AppColors.primary,
-                onRefresh: () async =>
-                    context.read<BookingBloc>().add(LoadUserBookings(userId)),
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                  itemCount: state.bookings.length,
-                  itemBuilder: (context, i) {
-                    final b = state.bookings[i];
-                    return BookingCard(
-                      booking: b,
-                      onCancel: () => _confirmCancel(context, b.id),
-                    );
-                  },
-                ),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
+            },
+            builder: (context, state) {
+              if (state is BookingLoading) return const LoadingWidget();
+              if (state is BookingError) {
+                return AppErrorWidget(
+                  message: state.message,
+                  onRetry: () =>
+                      context.read<BookingBloc>().add(LoadUserBookings(userId)),
+                );
+              }
+              if (state is UserBookingsLoaded) {
+                if (state.bookings.isEmpty) {
+                  return const EmptyStateWidget(
+                    message: AppStrings.noBookings,
+                    icon: Icons.calendar_today_outlined,
+                  );
+                }
+                return RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: () async =>
+                      context.read<BookingBloc>().add(LoadUserBookings(userId)),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                    itemCount: state.bookings.length,
+                    itemBuilder: (context, i) {
+                      final b = state.bookings[i];
+                      return BookingCard(
+                        booking: b,
+                        onCancel: () => _confirmCancel(context, b.id),
+                      );
+                    },
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
       ),
     );
   }
@@ -108,7 +105,8 @@ class MyBookingsPage extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => context.pop(),
-            child: const Text(AppStrings.no),
+            child: const Text(AppStrings.no,
+                style: TextStyle(color: AppColors.textSecondary)),
           ),
           TextButton(
             onPressed: () {

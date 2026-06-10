@@ -5,9 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_images.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/di/injection_container.dart';
-import '../../../core/storage/auth_storage.dart';
 import '../../blocs/venue/venue_bloc.dart';
-import '../../router/app_router.dart';
 import '../../widgets/empty_state_widget.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/loading_widget.dart';
@@ -43,15 +41,22 @@ class VenueListPage extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                       child: Row(
                         children: [
-                          Image.asset(
-                            AppImages.logo,
+                          Container(
                             width: 40,
                             height: 40,
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, e, s) => const Icon(
-                              Icons.sports_tennis_rounded,
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
                               color: Colors.white,
-                              size: 32,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Image.asset(
+                              AppImages.logo,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, e, s) => const Icon(
+                                Icons.sports_tennis_rounded,
+                                color: AppColors.primary,
+                                size: 22,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -83,21 +88,7 @@ class VenueListPage extends StatelessWidget {
                   ),
                 ),
               ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.calendar_month_outlined, color: Colors.white),
-                  tooltip: AppStrings.myBookings,
-                  onPressed: () => context.push(AppRouter.myBookings),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
-                  tooltip: 'Logout',
-                  onPressed: () async {
-                    await sl<AuthStorage>().clear();
-                    if (context.mounted) context.go(AppRouter.login);
-                  },
-                ),
-              ],
+              actions: const [],
             ),
           ],
           body: BlocBuilder<VenueBloc, VenueState>(

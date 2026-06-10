@@ -18,6 +18,7 @@ Future<void> _restoreSession() async {
   final session = await sl<AuthStorage>().load();
   if (session != null) {
     sl<ApiClient>().setUserId(session.userId);
+    sl<ApiClient>().setUserProfile(name: session.name, email: session.email);
   }
 }
 

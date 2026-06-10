@@ -4,6 +4,8 @@ import '../errors/exceptions.dart';
 
 class ApiClient {
   late final Dio _dio;
+  String _userName = '';
+  String _userEmail = '';
 
   ApiClient() {
     _dio = Dio(BaseOptions(
@@ -15,10 +17,30 @@ class ApiClient {
   }
 
   void setUserId(String userId) {
-    _dio.options.headers['X-User-Id'] = userId;
+    if (userId.isEmpty) {
+      _dio.options.headers.remove('X-User-Id');
+    } else {
+      _dio.options.headers['X-User-Id'] = userId;
+    }
   }
 
-  String? get currentUserId => _dio.options.headers['X-User-Id'] as String?;
+  void setUserProfile({required String name, required String email}) {
+    _userName = name;
+    _userEmail = email;
+  }
+
+  void clearUserProfile() {
+    _userName = '';
+    _userEmail = '';
+  }
+
+  String? get currentUserId {
+    final v = _dio.options.headers['X-User-Id'] as String?;
+    return (v != null && v.isNotEmpty) ? v : null;
+  }
+
+  String get currentUserName => _userName;
+  String get currentUserEmail => _userEmail;
 
   Future<Response> get(String path) async {
     try {

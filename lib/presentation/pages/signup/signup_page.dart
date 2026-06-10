@@ -52,8 +52,10 @@ class _SignupPageState extends State<SignupPage> {
       );
       final userId = data['user_id'] as String;
       final name = data['name'] as String? ?? '';
+      final email = _emailController.text.trim();
       client.setUserId(userId);
-      await sl<AuthStorage>().save(userId: userId, name: name);
+      client.setUserProfile(name: name, email: email);
+      await sl<AuthStorage>().save(userId: userId, name: name, email: email);
       if (mounted) context.go(AppRouter.venueList);
     } on ServerException catch (e) {
       setState(() {
