@@ -73,24 +73,46 @@ class BookingCard extends StatelessWidget {
                   child: _InfoTile(
                     icon: Icons.calendar_today_outlined,
                     label: 'Date',
-                    value: DateFormatter.toDisplayFormat(
-                        DateTime.parse(booking.date)),
+                    value: DateFormatter.toDisplayFormat(DateTime.parse(booking.date)),
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 40,
-                  color: AppColors.divider,
-                ),
+                Container(width: 1, height: 40, color: AppColors.divider),
                 Expanded(
                   child: _InfoTile(
                     icon: Icons.access_time_outlined,
                     label: 'Time',
-                    value: DateFormatter.slotRange(
-                        booking.startTime, booking.endTime),
+                    value: DateFormatter.slotRange(booking.startTime, booking.endTime),
+                  ),
+                ),
+                Container(width: 1, height: 40, color: AppColors.divider),
+                Expanded(
+                  child: _InfoTile(
+                    icon: Icons.timelapse_outlined,
+                    label: 'Duration',
+                    value: '${booking.durationHours}${booking.durationHours == 1 ? ' hr' : ' hrs'}',
                   ),
                 ),
               ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primarySurface,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  _AmountChip(label: 'Base', value: '₹${booking.baseAmount.toStringAsFixed(0)}'),
+                  const Text(' + ', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                  _AmountChip(label: 'GST 18%', value: '₹${booking.gstAmount.toStringAsFixed(0)}'),
+                  const Spacer(),
+                  Text('Total  ', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  Text('₹${booking.totalAmount.toStringAsFixed(0)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                ],
+              ),
             ),
           ),
           if (isConfirmed)
@@ -155,6 +177,24 @@ class _InfoTile extends StatelessWidget {
               color: AppColors.textPrimary,
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AmountChip extends StatelessWidget {
+  final String label;
+  final String value;
+  const _AmountChip({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(text: '$label ', style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+          TextSpan(text: value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         ],
       ),
     );

@@ -10,6 +10,10 @@ class BookingModel extends BookingEntity {
     required super.date,
     required super.startTime,
     required super.endTime,
+    required super.durationHours,
+    required super.baseAmount,
+    required super.gstAmount,
+    required super.totalAmount,
     required super.status,
     required super.createdAt,
   });
@@ -23,20 +27,11 @@ class BookingModel extends BookingEntity {
         date: json['date'] as String,
         startTime: json['start_time'] as String,
         endTime: json['end_time'] as String,
+        durationHours: (json['duration_hours'] as num?)?.toInt() ?? 1,
+        baseAmount: (json['base_amount'] as num?)?.toDouble() ?? 0,
+        gstAmount: (json['gst_amount'] as num?)?.toDouble() ?? 0,
+        totalAmount: (json['total_amount'] as num?)?.toDouble() ?? 0,
         status: json['status'] as String,
         createdAt: json['created_at'] as String,
       );
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'user_id': userId,
-        'slot_id': slotId,
-        'venue_id': venueId,
-        'venue_name': venueName,
-        'date': date,
-        'start_time': startTime,
-        'end_time': endTime,
-        'status': status,
-        'created_at': createdAt,
-      };
 }

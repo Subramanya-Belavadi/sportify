@@ -17,12 +17,14 @@ class BookingConfirmPage extends StatelessWidget {
 
   VenueEntity get venue => args['venue'] as VenueEntity;
   SlotEntity get slot => args['slot'] as SlotEntity;
+  int get duration => (args['duration'] as int?) ?? 1;
+  String get endTime => (args['endTime'] as String?) ?? slot.endTime;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<BookingBloc>(),
-      child: _ConfirmView(venue: venue, slot: slot),
+      child: _ConfirmView(venue: venue, slot: slot, duration: duration, endTime: endTime),
     );
   }
 }
@@ -30,7 +32,9 @@ class BookingConfirmPage extends StatelessWidget {
 class _ConfirmView extends StatelessWidget {
   final VenueEntity venue;
   final SlotEntity slot;
-  const _ConfirmView({required this.venue, required this.slot});
+  final int duration;
+  final String endTime;
+  const _ConfirmView({required this.venue, required this.slot, required this.duration, required this.endTime});
 
   @override
   Widget build(BuildContext context) {
@@ -92,14 +96,11 @@ class _ConfirmView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Venue image card
               _VenueImageCard(venue: venue),
               const SizedBox(height: 16),
-              // Booking details card
-              _BookingDetailsCard(venue: venue, slot: slot),
-              const Spacer(),
-              // Price summary
-              _PriceSummary(price: venue.pricePerHour),
+              _BookingDetailsCard(venue: venue, slot: slot, endTime: endTime, duration: duration),
+              const SizedBox(height: 16),
+              _PriceBreakdown(pricePerHour: venue.pricePerHour, duration: duration),
               const SizedBox(height: 16),
               BlocBuilder<BookingBloc, BookingState>(
                 builder: (context, state) {
@@ -111,6 +112,7 @@ class _ConfirmView extends StatelessWidget {
                               BookSlot(
                                 slotId: slot.id,
                                 userId: sl<ApiClient>().currentUserId ?? '',
+                                durationHours: duration,
                               ),
                             ),
                     style: ElevatedButton.styleFrom(
@@ -201,7 +203,9 @@ class _VenueImageCard extends StatelessWidget {
 class _BookingDetailsCard extends StatelessWidget {
   final VenueEntity venue;
   final SlotEntity slot;
-  const _BookingDetailsCard({required this.venue, required this.slot});
+  final String endTime;
+  final int duration;
+  const _BookingDetailsCard({required this.venue, required this.slot, required this.endTime, required this.duration});
 
   @override
   Widget build(BuildContext context) {
@@ -245,7 +249,13 @@ class _BookingDetailsCard extends StatelessWidget {
           _DetailRow(
             icon: Icons.access_time_outlined,
             label: 'Time',
-            value: DateFormatter.slotRange(slot.startTime, slot.endTime),
+            value: DateFormatter.slotRange(slot.startTime, endTime),
+          ),
+          const Divider(height: 20, color: AppColors.divider),
+          _DetailRow(
+            icon: Icons.timelapse_outlined,
+            label: 'Duration',
+            value: '$duration ${duration == 1 ? 'hour' : 'hours'}',
           ),
           const Divider(height: 20, color: AppColors.divider),
           _DetailRow(
@@ -297,39 +307,54 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-class _PriceSummary extends StatelessWidget {
-  final double price;
-  const _PriceSummary({required this.price});
+class _PriceBreakdown extends StatelessWidget {
+  final double pricePerHour;
+  final int duration;
+  const _PriceBreakdown({required this.pricePerHour, required this.duration});
 
   @override
   Widget build(BuildContext context) {
+    final base = pricePerHour * duration;
+    final gst = base * 0.18;
+    final total = base + gst;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 14, offset: const Offset(0, 4))],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Total Amount',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            '₹${price.toStringAsFixed(0)}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
+          const Text('Price Breakdown', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.textPrimary)),
+          const SizedBox(height: 14),
+          _PriceRow(label: '₹${pricePerHour.toStringAsFixed(0)} × $duration ${duration == 1 ? 'hr' : 'hrs'}', value: '₹${base.toStringAsFixed(0)}', bold: false),
+          const SizedBox(height: 8),
+          _PriceRow(label: 'GST (18%)', value: '₹${gst.toStringAsFixed(0)}', bold: false),
+          const Divider(height: 20, color: AppColors.divider),
+          _PriceRow(label: 'Total', value: '₹${total.toStringAsFixed(0)}', bold: true),
         ],
       ),
+    );
+  }
+}
+
+class _PriceRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool bold;
+  const _PriceRow({required this.label, required this.value, required this.bold});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(label, style: TextStyle(fontSize: bold ? 15 : 13, color: bold ? AppColors.textPrimary : AppColors.textSecondary, fontWeight: bold ? FontWeight.w800 : FontWeight.w400)),
+        const Spacer(),
+        Text(value, style: TextStyle(fontSize: bold ? 18 : 13, color: bold ? AppColors.primary : AppColors.textPrimary, fontWeight: bold ? FontWeight.w800 : FontWeight.w600)),
+      ],
     );
   }
 }

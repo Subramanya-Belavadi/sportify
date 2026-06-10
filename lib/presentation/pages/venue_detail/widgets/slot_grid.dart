@@ -6,16 +6,19 @@ import '../../../../domain/entities/slot_entity.dart';
 class SlotGrid extends StatelessWidget {
   final List<SlotEntity> slots;
   final SlotEntity? selectedSlot;
+  final List<SlotEntity> selectedSlots;
   final ValueChanged<SlotEntity> onSlotTap;
   const SlotGrid({
     super.key,
     required this.slots,
     required this.selectedSlot,
+    required this.selectedSlots,
     required this.onSlotTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final selectedIds = selectedSlots.map((s) => s.id).toSet();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -32,7 +35,8 @@ class SlotGrid extends StatelessWidget {
             itemCount: slots.length,
             itemBuilder: (context, i) => _SlotChip(
               slot: slots[i],
-              isSelected: selectedSlot?.id == slots[i].id,
+              isSelected: selectedIds.contains(slots[i].id),
+              isAnchor: selectedSlot?.id == slots[i].id,
               onTap: () => onSlotTap(slots[i]),
             ),
           ),
@@ -45,10 +49,12 @@ class SlotGrid extends StatelessWidget {
 class _SlotChip extends StatelessWidget {
   final SlotEntity slot;
   final bool isSelected;
+  final bool isAnchor;
   final VoidCallback onTap;
   const _SlotChip({
     required this.slot,
     required this.isSelected,
+    required this.isAnchor,
     required this.onTap,
   });
 
@@ -103,13 +109,13 @@ class _SlotChip extends StatelessWidget {
                     : available
                         ? AppColors.textPrimary
                         : AppColors.slotBooked,
-                fontWeight: FontWeight.w700,
+                fontWeight: isAnchor ? FontWeight.w800 : FontWeight.w700,
                 fontSize: 13,
               ),
             ),
             const SizedBox(height: 2),
             Text(
-              available ? (isSelected ? 'Selected' : 'Open') : 'Booked',
+              available ? (isAnchor ? 'Start' : isSelected ? 'Added' : 'Open') : 'Booked',
               style: TextStyle(
                 color: isSelected
                     ? Colors.white.withValues(alpha: 0.8)

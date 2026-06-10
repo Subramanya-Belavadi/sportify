@@ -14,6 +14,7 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
     on<LoadSlots>(_onLoadSlots);
     on<RefreshSlots>(_onRefreshSlots);
     on<SelectSlot>(_onSelectSlot);
+    on<SelectDuration>(_onSelectDuration);
   }
 
   Future<void> _onLoadSlots(LoadSlots event, Emitter<SlotState> emit) async {
@@ -45,6 +46,18 @@ class SlotBloc extends Bloc<SlotEvent, SlotState> {
       emit(SlotLoaded(
         slots: (state as SlotLoaded).slots,
         selectedSlot: event.slot,
+        selectedDuration: 1,
+      ));
+    }
+  }
+
+  void _onSelectDuration(SelectDuration event, Emitter<SlotState> emit) {
+    if (state is SlotLoaded) {
+      final s = state as SlotLoaded;
+      emit(SlotLoaded(
+        slots: s.slots,
+        selectedSlot: s.selectedSlot,
+        selectedDuration: event.hours,
       ));
     }
   }

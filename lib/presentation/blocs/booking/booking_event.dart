@@ -9,9 +9,10 @@ abstract class BookingEvent extends Equatable {
 class BookSlot extends BookingEvent {
   final String slotId;
   final String userId;
-  const BookSlot({required this.slotId, required this.userId});
+  final int durationHours;
+  const BookSlot({required this.slotId, required this.userId, this.durationHours = 1});
   @override
-  List<Object?> get props => [slotId, userId];
+  List<Object?> get props => [slotId, userId, durationHours];
 }
 
 class LoadUserBookings extends BookingEvent {

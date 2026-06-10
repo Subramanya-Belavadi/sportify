@@ -9,6 +9,10 @@ class BookingEntity extends Equatable {
   final String date;
   final String startTime;
   final String endTime;
+  final int durationHours;
+  final double baseAmount;
+  final double gstAmount;
+  final double totalAmount;
   final String status;
   final String createdAt;
 
@@ -21,10 +25,14 @@ class BookingEntity extends Equatable {
     required this.date,
     required this.startTime,
     required this.endTime,
+    required this.durationHours,
+    required this.baseAmount,
+    required this.gstAmount,
+    required this.totalAmount,
     required this.status,
     required this.createdAt,
   });
 
   @override
-  List<Object?> get props => [id, userId, slotId, venueId, date, startTime, endTime, status];
+  List<Object?> get props => [id, userId, slotId, venueId, date, startTime, endTime, durationHours, status];
 }

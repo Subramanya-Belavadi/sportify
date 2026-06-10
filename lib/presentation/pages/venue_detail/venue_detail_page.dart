@@ -69,6 +69,7 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
                     return SlotGrid(
                       slots: state.slots,
                       selectedSlot: state.selectedSlot,
+                      selectedSlots: state.selectedSlots,
                       onSlotTap: (slot) =>
                           context.read<SlotBloc>().add(SelectSlot(slot)),
                     );
@@ -81,45 +82,94 @@ class _VenueDetailPageState extends State<VenueDetailPage> {
         ),
         bottomNavigationBar: BlocBuilder<SlotBloc, SlotState>(
           builder: (context, state) {
-            final selected = state is SlotLoaded ? state.selectedSlot : null;
+            if (state is! SlotLoaded || state.selectedSlot == null) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, -4))],
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                      child: const Text('Select a Time Slot', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    ),
+                  ),
+                ),
+              );
+            }
+            final s = state;
+            final selected = s.selectedSlot!;
+            final endSlots = s.selectedSlots;
+            final endTime = endSlots.isNotEmpty ? endSlots.last.endTime : selected.endTime;
+            final price = widget.venue.pricePerHour * s.selectedDuration;
+
             return Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, -4))],
               ),
               child: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                  child: ElevatedButton(
-                    onPressed: selected != null
-                        ? () => context.push(
-                              AppRouter.bookingConfirm,
-                              extra: {'venue': widget.venue, 'slot': selected},
-                            )
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(52),
-                      elevation: 3,
-                      shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Duration selector
+                      Row(
+                        children: [
+                          const Text('Duration:', style: TextStyle(fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                          const SizedBox(width: 10),
+                          ...List.generate(s.maxDuration, (i) {
+                            final h = i + 1;
+                            final active = h == s.selectedDuration;
+                            return GestureDetector(
+                              onTap: () => context.read<SlotBloc>().add(SelectDuration(h)),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: active ? AppColors.primary : AppColors.primarySurface,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: active ? AppColors.primary : AppColors.divider),
+                                ),
+                                child: Text('${h}h', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.primary)),
+                              ),
+                            );
+                          }),
+                          const Spacer(),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('₹${price.toStringAsFixed(0)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                              Text('+ 18% GST', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                            ],
+                          ),
+                        ],
                       ),
-                    ),
-                    child: Text(
-                      selected != null
-                          ? '${AppStrings.bookSlot}  ·  ${DateFormatter.toTimeDisplay(selected.startTime)}'
-                          : 'Select a Time Slot',
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700),
-                    ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => context.push(
+                          AppRouter.bookingConfirm,
+                          extra: {'venue': widget.venue, 'slot': selected, 'duration': s.selectedDuration, 'endTime': endTime},
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size.fromHeight(50),
+                          elevation: 3,
+                          shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text(
+                          '${DateFormatter.toTimeDisplay(selected.startTime)} – ${DateFormatter.toTimeDisplay(endTime)}  ·  Book',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

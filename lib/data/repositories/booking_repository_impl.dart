@@ -9,9 +9,9 @@ class BookingRepositoryImpl implements BookingRepository {
   BookingRepositoryImpl(this._datasource);
 
   @override
-  Future<BookingEntity> bookSlot({required String slotId, required String userId}) async {
+  Future<BookingEntity> bookSlot({required String slotId, required String userId, int durationHours = 1}) async {
     try {
-      return await _datasource.bookSlot(slotId: slotId, userId: userId);
+      return await _datasource.bookSlot(slotId: slotId, userId: userId, durationHours: durationHours);
     } on SlotAlreadyTakenException {
       throw const SlotAlreadyTakenFailure();
     } on NetworkException {

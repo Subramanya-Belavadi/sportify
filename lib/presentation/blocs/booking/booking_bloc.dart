@@ -22,6 +22,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       final booking = await _repository.bookSlot(
         slotId: event.slotId,
         userId: event.userId,
+        durationHours: event.durationHours,
       );
       emit(BookingSuccess(booking));
     } on SlotAlreadyTakenFailure {

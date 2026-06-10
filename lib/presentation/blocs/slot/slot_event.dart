@@ -28,3 +28,10 @@ class SelectSlot extends SlotEvent {
   @override
   List<Object?> get props => [slot];
 }
+
+class SelectDuration extends SlotEvent {
+  final int hours;
+  const SelectDuration(this.hours);
+  @override
+  List<Object?> get props => [hours];
+}
