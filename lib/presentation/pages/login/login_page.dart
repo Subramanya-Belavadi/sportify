@@ -7,6 +7,7 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/storage/auth_storage.dart';
 import '../../router/app_router.dart';
 
 class LoginPage extends StatefulWidget {
@@ -43,7 +44,10 @@ class _LoginPageState extends State<LoginPage> {
         _emailController.text.trim(),
         _passwordController.text,
       );
-      client.setUserId(data['user_id'] as String);
+      final userId = data['user_id'] as String;
+      final name = data['name'] as String? ?? '';
+      client.setUserId(userId);
+      await sl<AuthStorage>().save(userId: userId, name: name);
       if (mounted) context.go(AppRouter.venueList);
     } on ServerException catch (e) {
       setState(() {

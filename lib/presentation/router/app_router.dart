@@ -1,4 +1,6 @@
 import 'package:go_router/go_router.dart';
+import '../../core/di/injection_container.dart';
+import '../../core/network/api_client.dart';
 import '../../domain/entities/venue_entity.dart';
 import '../pages/booking_confirm/booking_confirm_page.dart';
 import '../pages/login/login_page.dart';
@@ -19,6 +21,12 @@ class AppRouter {
 
   static final GoRouter router = GoRouter(
     initialLocation: login,
+    redirect: (context, state) {
+      final loggedIn = sl<ApiClient>().currentUserId != null;
+      final onAuth = state.matchedLocation == login || state.matchedLocation == signup;
+      if (loggedIn && onAuth) return venueList;
+      return null;
+    },
     routes: [
       GoRoute(path: login, builder: (c, s) => const LoginPage()),
       GoRoute(path: signup, builder: (c, s) => const SignupPage()),

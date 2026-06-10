@@ -12,10 +12,12 @@ import '../../presentation/blocs/booking/booking_bloc.dart';
 import '../../presentation/blocs/slot/slot_bloc.dart';
 import '../../presentation/blocs/venue/venue_bloc.dart';
 import '../network/api_client.dart';
+import '../storage/auth_storage.dart';
 
 final sl = GetIt.instance;
 
 void setupDependencies() {
+  sl.registerLazySingleton<AuthStorage>(() => AuthStorage());
   sl.registerLazySingleton<ApiClient>(() => ApiClient());
 
   sl.registerLazySingleton<VenueRemoteDatasource>(() => VenueRemoteDatasourceImpl(sl()));

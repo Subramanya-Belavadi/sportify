@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/di/injection_container.dart';
@@ -34,7 +35,7 @@ class MyBookingsPage extends StatelessWidget {
           ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => context.pop(),
           ),
         ),
         body: BlocConsumer<BookingBloc, BookingState>(
@@ -106,12 +107,12 @@ class MyBookingsPage extends StatelessWidget {
         content: const Text(AppStrings.cancelConfirm),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => context.pop(),
             child: const Text(AppStrings.no),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              context.pop();
               context.read<BookingBloc>().add(
                     CancelBooking(
                       bookingId: bookingId,

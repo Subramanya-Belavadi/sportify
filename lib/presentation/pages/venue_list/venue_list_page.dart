@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_images.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/di/injection_container.dart';
+import '../../../core/storage/auth_storage.dart';
 import '../../blocs/venue/venue_bloc.dart';
 import '../../router/app_router.dart';
 import '../../widgets/empty_state_widget.dart';
@@ -91,7 +92,10 @@ class VenueListPage extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.logout_rounded, color: Colors.white),
                   tooltip: 'Logout',
-                  onPressed: () => context.go(AppRouter.login),
+                  onPressed: () async {
+                    await sl<AuthStorage>().clear();
+                    if (context.mounted) context.go(AppRouter.login);
+                  },
                 ),
               ],
             ),
