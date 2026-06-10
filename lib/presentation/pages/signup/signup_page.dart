@@ -9,25 +9,30 @@ import '../../../core/errors/exceptions.dart';
 import '../../../core/network/api_client.dart';
 import '../../router/app_router.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirm = true;
   bool _isLoading = false;
   String? _errorMessage;
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmController.dispose();
     super.dispose();
   }
 
@@ -39,7 +44,8 @@ class _LoginPageState extends State<LoginPage> {
     });
     try {
       final client = sl<ApiClient>();
-      final data = await client.login(
+      final data = await client.signup(
+        _nameController.text.trim(),
         _emailController.text.trim(),
         _passwordController.text,
       );
@@ -48,7 +54,9 @@ class _LoginPageState extends State<LoginPage> {
     } on ServerException catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = e.message;
+        _errorMessage = e.statusCode == 409
+            ? 'This email is already registered.'
+            : e.message;
       });
     } catch (_) {
       setState(() {
@@ -69,37 +77,29 @@ class _LoginPageState extends State<LoginPage> {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF1a2850), AppColors.primary, Color(0xFF2d4a8a)],
+                colors: [
+                  Color(0xFF1a2850),
+                  AppColors.primary,
+                  Color(0xFF2d4a8a),
+                ],
               ),
             ),
           ),
           Positioned(
-            top: -60,
-            right: -60,
+            top: -40,
+            right: -40,
             child: Container(
-              width: 220,
-              height: 220,
+              width: 180,
+              height: 180,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withValues(alpha: 0.05),
               ),
             ),
           ),
-          Positioned(
-            top: 80,
-            right: 30,
-            child: Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.04),
-              ),
-            ),
-          ),
           Column(
             children: [
-              const _HeroSection(),
+              _Header(onBack: () => context.pop()),
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -118,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Welcome back',
+                              'Create account',
                               style: Theme.of(context)
                                   .textTheme
                                   .headlineSmall
@@ -129,13 +129,31 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Sign in to continue',
+                              'Join Sportify and start booking',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
                                   ?.copyWith(color: AppColors.textSecondary),
                             ),
                             const SizedBox(height: 28),
+                            _Label(text: 'Full Name'),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: _nameController,
+                              textCapitalization: TextCapitalization.words,
+                              textInputAction: TextInputAction.next,
+                              decoration: _inputDecoration(
+                                hint: 'John Doe',
+                                icon: Icons.person_outline_rounded,
+                              ),
+                              validator: (v) {
+                                if (v == null || v.trim().isEmpty) {
+                                  return 'Name is required';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
                             _Label(text: 'Email'),
                             const SizedBox(height: 6),
                             TextFormField(
@@ -165,10 +183,9 @@ class _LoginPageState extends State<LoginPage> {
                             TextFormField(
                               controller: _passwordController,
                               obscureText: _obscurePassword,
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _submit(),
+                              textInputAction: TextInputAction.next,
                               decoration: _inputDecoration(
-                                hint: '••••••••',
+                                hint: 'Min. 6 characters',
                                 icon: Icons.lock_outline_rounded,
                               ).copyWith(
                                 suffixIcon: IconButton(
@@ -186,6 +203,43 @@ class _LoginPageState extends State<LoginPage> {
                               validator: (v) {
                                 if (v == null || v.isEmpty) {
                                   return 'Password is required';
+                                }
+                                if (v.length < 6) {
+                                  return 'Password must be at least 6 characters';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            _Label(text: 'Confirm Password'),
+                            const SizedBox(height: 6),
+                            TextFormField(
+                              controller: _confirmController,
+                              obscureText: _obscureConfirm,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _submit(),
+                              decoration: _inputDecoration(
+                                hint: 'Re-enter password',
+                                icon: Icons.lock_outline_rounded,
+                              ).copyWith(
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscureConfirm
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                    color: AppColors.textSecondary,
+                                    size: 20,
+                                  ),
+                                  onPressed: () => setState(() =>
+                                      _obscureConfirm = !_obscureConfirm),
+                                ),
+                              ),
+                              validator: (v) {
+                                if (v == null || v.isEmpty) {
+                                  return 'Please confirm your password';
+                                }
+                                if (v != _passwordController.text) {
+                                  return 'Passwords do not match';
                                 }
                                 return null;
                               },
@@ -246,7 +300,7 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                       )
                                     : const Text(
-                                        'Sign In',
+                                        'Create Account',
                                         style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700),
@@ -258,15 +312,15 @@ class _LoginPageState extends State<LoginPage> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 const Text(
-                                  "Don't have an account? ",
+                                  'Already have an account? ',
                                   style: TextStyle(
                                       color: AppColors.textSecondary,
                                       fontSize: 14),
                                 ),
                                 GestureDetector(
-                                  onTap: () => context.push(AppRouter.signup),
+                                  onTap: () => context.pop(),
                                   child: const Text(
-                                    'Sign Up',
+                                    'Sign In',
                                     style: TextStyle(
                                       color: AppColors.primary,
                                       fontSize: 14,
@@ -341,57 +395,61 @@ class _Label extends StatelessWidget {
   }
 }
 
-class _HeroSection extends StatelessWidget {
-  const _HeroSection();
+class _Header extends StatelessWidget {
+  final VoidCallback onBack;
+  const _Header({required this.onBack});
 
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
     return Padding(
-      padding: EdgeInsets.fromLTRB(28, top + 32, 28, 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.fromLTRB(16, top + 12, 28, 20),
+      child: Row(
         children: [
-          Container(
-            width: 72,
-            height: 72,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Image.asset(
-              AppImages.logo,
-              fit: BoxFit.contain,
-              errorBuilder: (_, e, s) => const Icon(
-                Icons.sports_tennis_rounded,
-                color: AppColors.primary,
-                size: 36,
+          IconButton(
+            onPressed: onBack,
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
               ),
+              child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(width: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Image.asset(
+                  AppImages.logo,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, e, s) => const Icon(
+                    Icons.sports_tennis_rounded,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 10),
           Text(
             AppStrings.appName,
-            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1,
-                ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            AppStrings.tagline,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.75),
-                ),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.5,
+            ),
           ),
         ],
       ),

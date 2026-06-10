@@ -40,6 +40,16 @@ class ApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final res = await post('/auth/login', data: {'email': email, 'password': password});
+    return res.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> signup(String name, String email, String password) async {
+    final res = await post('/auth/signup', data: {'name': name, 'email': email, 'password': password});
+    return res.data as Map<String, dynamic>;
+  }
+
   Future<Response> delete(String path) async {
     try {
       return await _dio.delete(path);
