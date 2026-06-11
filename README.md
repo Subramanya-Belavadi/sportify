@@ -2,7 +2,19 @@
 
 A Flutter sports venue booking app that lets users discover, filter, and book sports courts in real time — with live slot reservation, countdown timers, and an instant booking confirmation flow.
 
----
+#IMPORTANT
+------------------------------------------------------------------------------------------------------------------------------
+Apologies for the late APK submission. I encountered a deployment issue, but it has now been resolved, and the APK is working correctly.
+
+**Note:** The APK currently works only when your mobile device is connected to a **Wi-Fi network**. It may not work when using **mobile data** due to a DNS resolution issue with some mobile carriers.
+
+**Error:** `ERR_NAME_NOT_RESOLVED` — This occurs because certain mobile carrier DNS servers are unable to resolve `railway.app` domains. This is an ISP-level limitation and is **not an issue with the app itself**.
+
+Please connect to a Wi-Fi network before launching and using the app.
+
+APK LINK: https://drive.google.com/drive/folders/1tXF51LguKXPE3mXKDw7N377CikVLbR8e?usp=drive_link
+Swagger Link: https://web-production-da986.up.railway.app/docs
+--------------------------------------------------------------------------------------------------------------------------------------------
 
 ## Features
 
